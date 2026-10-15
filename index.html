@@ -463,7 +463,7 @@ const lanes = TH.filter(t => t.ps.length).sort((a, b) => a.first - b.first);
    grass (blades over the dot read as a paw). No Math.random: the same on every visit, in every chart */
 TH.forEach(t => t.ps.forEach((p, i, a) => { const u = a.slice(0, i).filter(o => lead(o) === lead(p)).slice(lead(p) ? -2 : -1).map(o => o.v), h = [...p.id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 9973, 7);
   p.v = [0, 1, 2].map(j => (h + j) % 3).find(v => !u.includes(v) && (i || lead(p) || v < 2)); }));
-const THO = [...lanes].reverse().concat(TH.filter(t => !t.ps.length)); /* numbered and written newest first; the chart keeps its lanes in time order */
+const THO = [...TH.filter(t => t.ps.length), ...TH.filter(t => !t.ps.length)]; /* numbered and written in content.json order (themes); the chart keeps its lanes in time order */
 THO.forEach((t, i) => t.no = i + 1);
 const thBy = Object.fromEntries(TH.map(t => [t.key, t]));
 const span = t => { if (!t.ps.length) return t.period || ''; const a = Math.min(Math.floor(t.first), parseInt(t.period) || Infinity), /* research can start before the first paper */ b = t.ongoing ? '현재' : Math.floor(t.last); return a === b ? String(a) : `${a}–${b}`; };
