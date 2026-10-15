@@ -241,8 +241,10 @@ svg .bal :not(rect){pointer-events:none}
 .track{position:relative;height:16px;background-image:linear-gradient(90deg,var(--hair) 0 1px,transparent 1px);background-repeat:repeat-x}
 .bar{position:absolute;top:2px;height:12px;min-width:6px;border:1.3px solid var(--ink);background:var(--sheet)}
 .bar.pi{background:repeating-linear-gradient(-45deg,var(--ink) 0 1px,var(--sheet) 1px 4.5px)}
-.bar.on::after{content:"";position:absolute;right:-10px;top:50%;transform:translateY(-50%);border-left:8px solid var(--red);border-block:5px solid transparent}
+.bar.on::after{content:"";position:absolute;right:-10px;top:50%;transform:translateY(-50%);transform-origin:left center;border-left:8px solid var(--red);border-block:5px solid transparent}
 .key .bar.on{margin-right:10px}
+.bar.wait{clip-path:inset(0 100% 0 0)} /* motion only: a bar waits unseen until it is drawn (grow, 05)... */
+.bar.on.wait::after{transform:translateY(-50%) scale(0)} /* ...the arrow of a running one waits a little longer, then shoots out of the tip (grow) */
 #patents,#programs{border-top:1px solid var(--ink)}
 .pt-row{display:grid;grid-template-columns:116px minmax(0,1fr) 84px 136px;grid-template-areas:"d t s n";gap:2px 24px;padding:8px 0;border-bottom:1px solid var(--hair);align-items:baseline}
 .pt-d{grid-area:d;font:400 14px var(--f-let);color:var(--ink-2);font-variant-numeric:tabular-nums}
@@ -264,6 +266,8 @@ svg .bal :not(rect){pointer-events:none}
 .list small{display:block;font-size:14px;line-height:1.5;color:var(--ink-2);margin-top:2px}
 .list li.now,.list li.now .w,.list li.now small{color:var(--red)}
 .tri{display:inline-block;width:12px;height:10px;margin-left:6px;background:var(--red);clip-path:polygon(50% 0,100% 100%,0 100%)}
+.tri.wait{opacity:0} /* motion only: waits unseen until it drops (05) */
+@media print{.bar.wait{clip-path:none!important}.bar.on.wait::after{transform:translateY(-50%)!important}.tri.wait{opacity:1!important;transform:none!important}} /* what was not scrolled into view yet still prints: !important, so a reveal still pending (an effect filling backwards through its delay) cannot hold it */
 .list.in small{display:inline-block}
 .f-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:40px 48px}
 
@@ -341,7 +345,7 @@ svg .bal :not(rect){pointer-events:none}
   .pt-row{grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"d n s" "t t t";gap:2px 12px}
   .list li{grid-template-columns:minmax(0,1fr);gap:0}
 }
-@media (prefers-reduced-motion:reduce){ *,::before{transition:none!important;animation:none!important;scroll-behavior:auto!important} }
+@media (prefers-reduced-motion:reduce){ *,::before,::after{transition:none!important;animation:none!important;scroll-behavior:auto!important} }
 </style>
 </head>
 <body>
@@ -762,6 +766,20 @@ const sprout = (a, tp, dl = 0) => {
    6–12 %, so a 28 px number shows it as well as a wide chip. 0.3 s: nine frames on a 30 Hz screen. WAAPI, so it never
    replays when a panel comes back from display:none */
 const thump = (e, dl = 0, q = Math.min(.12, Math.max(.06, 6 / e.getBoundingClientRect().width))) => matchMedia('(prefers-reduced-motion:reduce)').matches || e.animate([{transform: 'none'}, {transform: `scale(${1 - q})`, offset: .3}, {transform: `scale(${1 + q / 2})`, offset: .65}, {transform: 'none'}], {duration: 300, delay: dl});
+/* a project bar is uncovered from its start to its end (450 ms, slowing): a clip, not the width, so the hatch stays put. fill both: the bar
+   is unseen through its delay and stays whole until .wait goes, in the same turn the animation is dropped. Then the 'now' arrow of a
+   running project shoots out of the tip, a little past (320 ms). Both run on the document's clock, so one cut off by its panel going
+   display:none ends unseen instead of replaying on return. Only a waiting element is drawn: a call on one rendered whole is a no-op */
+const grow = (b, dl = 0) => { if (!b.classList.contains('wait')) return; if (matchMedia('(prefers-reduced-motion:reduce)').matches) return b.classList.remove('wait');
+  const a = b.animate([{clipPath: 'inset(0 100% 0 0)'}, {clipPath: 'inset(0 0 0 0)'}], {duration: 450, delay: dl, easing: 'ease-out', fill: 'both'});
+  a.finished.then(() => { a.cancel(); b.classList.remove('wait'); if (!b.classList.contains('on') || matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+    const p = b.animate([{transform: 'translateY(-50%) scale(0)'}, {transform: 'translateY(-50%) scale(1)'}], {duration: 320, easing: 'cubic-bezier(.3,1.8,.5,1)', fill: 'both', pseudoElement: '::after'});
+    p.finished.then(() => p.cancel()); }); };
+/* the red triangle of the newest change falls onto its line and bounces once (420 ms); it is seen early in the fall, not only at the end */
+const drop = (e, dl = 0) => { if (!e.classList.contains('wait')) return; if (matchMedia('(prefers-reduced-motion:reduce)').matches) return e.classList.remove('wait');
+  const a = e.animate([{transform: 'translateY(-1.1em)', opacity: 0, easing: 'ease-in'}, {opacity: 1, offset: .15}, {transform: 'none', offset: .5, easing: 'ease-out'},
+    {transform: 'translateY(-.3em)', offset: .75, easing: 'ease-in'}, {transform: 'none', opacity: 1}], {duration: 420, delay: dl, fill: 'both'});
+  a.finished.then(() => { a.cancel(); e.classList.remove('wait'); }); };
 /* a hidden panel (WebKit) freezes the animation clock, which then jumps to the wall clock on return: a motion due while
    hidden waits until the page is shown, and one in flight goes on from where it stopped instead of skipping ahead */
 const shown = f => document.hidden ? document.addEventListener('visibilitychange', () => shown(f), {once: true}) : f();
@@ -1070,22 +1088,31 @@ const ptRow = p => `<div class="pt-row">
   <span class="pt-d">${esc(p.date)}</span><span class="pt-t">${p.url ? `<a href="${esc(p.url)}" target="_blank" rel="noopener">${glue(p.title)}</a>` : esc(p.title)}${p.note ? `<small>${esc(p.note)}</small>` : ''}</span><span class="pt-s"><span class="st ${stc(p.status)}">${esc(p.status)}</span></span><span class="pt-n">${esc(p.number)}</span></div>`;
 $('#patents').innerHTML = C.patents.map(ptRow).join('');
 $('#programs').innerHTML = (C.programs || []).map(ptRow).join(''); /* software copyright registrations share the patent row */
-/* each status stamp is pressed once, when it first comes 200 px above the window bottom (where the eye is, not at the edge);
-   stamps arriving together go one by one, 60 ms apart, top first. root: document, so the margin holds in a cross-origin frame */
-let pq = 0;
-if (io) { const so = new IntersectionObserver(es => es.filter(e => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top).forEach(({target: s}) => {
-    so.unobserve(s); shown(() => { const t = performance.now(); pq = Math.max(pq, t - 60) + 60; thump(s, pq - t); }); }), {root: document, rootMargin: '0px 0px -200px 0px'});
-  document.querySelectorAll('#patents .st, #programs .st').forEach(s => so.observe(s)); }
 
 /* 05: education + career, newest first (red triangle on the newest); awards, collaboration */
 const ms = [
   ...C.education.map(e => ({k: startD(part(e.when, 1)), when: e.when, what: e.what, note: e.note})),
   ...C.career.map(e => ({k: startD(part(e.when, 0)), when: e.when, what: e.what, note: e.note}))
 ].sort((a, b) => b.k - a.k);
-$('#revfull').innerHTML = ms.map((m, i) => `<li${i === 0 ? ' class="now"' : ''}><span class="w">${nb(m.when)}${i === 0 ? '<span class="tri" role="img" aria-label="가장 최근"></span>' : ''}</span><div>${esc(m.what)}${m.note ? ` <small>${esc(m.note)}</small>` : ''}</div></li>`).join('');
+$('#revfull').innerHTML = ms.map((m, i) => `<li${i === 0 ? ' class="now"' : ''}><span class="w">${nb(m.when)}${i === 0 ? `<span class="tri" role="img" aria-label="가장 최근"></span>` : ''}</span><div>${esc(m.what)}${m.note ? ` <small>${esc(m.note)}</small>` : ''}</div></li>`).join('');
 const simple = list => list.map(x => `<li><span class="w">${nb(x.when)}</span><div>${esc(x.what)}${x.note ? ` <small>${esc(x.note)}</small>` : ''}</div></li>`).join('');
 $('#awards').innerHTML = simple(C.awards);
 $('#collab').innerHTML = simple(C.collab);
+/* once, when first seen: a status stamp is pressed (thump) as it comes 200 px above the window bottom (where the eye is, not at the edge);
+   a project bar is drawn (grow) and the newest-change triangle falls (drop) as soon as they are in view, since they wait unseen (.wait)
+   until then and a row on screen should not sit empty. (The observer reports a frame after the paint, so without .wait the first frame
+   would show them done.) .wait is put on here, beside what takes it off, still in the render's turn (nothing has painted yet): a render
+   failing above cannot leave them hidden. Ones arriving together go one by one, 60 ms apart, top first, in a queue per kind (the stamps'
+   observer reports first, and in one queue stamps below would hold up bars above). The top 46 px (--tb) lie under the sticky tab bar:
+   nothing is seen there. A bar is watched through its .track: Chromium clips the observed box by the target's own clip-path, so a
+   waiting bar (inset to nothing) would only count as seen once its top edge cleared the tab bar, one bar-height late */
+let pq = {};
+if (io) { const seen = (es, o) => es.filter(e => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top).forEach(({target: el}) => {
+    o.unobserve(el); const s = el.classList.contains('track') ? el.firstElementChild : el; shown(() => { const t = performance.now(), k = s.classList.contains('st') ? 'st' : 'rv'; pq[k] = Math.max(pq[k] || 0, t - 60) + 60; (s.classList.contains('bar') ? grow : s.classList.contains('tri') ? drop : thump)(s, pq[k] - t); }); });
+  const so = new IntersectionObserver(seen, {rootMargin: '-46px 0px -200px 0px'}), ro = new IntersectionObserver(seen, {rootMargin: '-46px 0px 0px 0px'});
+  document.querySelectorAll('#patents .st, #programs .st').forEach(s => so.observe(s));
+  matchMedia('(prefers-reduced-motion:reduce)').matches || document.querySelectorAll('#gantt .bar, #revfull .tri').forEach(s => { s.classList.add('wait'); ro.observe(s.classList.contains('bar') ? s.parentElement : s); }); }
+matchMedia('(prefers-reduced-motion:reduce)').addEventListener?.('change', e => e.matches && document.getAnimations().forEach(a => a.finish())); /* the preference turning on mid-motion: all in flight jumps to its end (?. : Safari 13 has no addEventListener here) */
 $('#foot').innerHTML = `<p>${esc(C.footer || '')}</p>${contact('f')}`;
 wire('f');
 
@@ -1157,7 +1184,7 @@ function route(nav) {
   if (!pg) { pg = SH[0]; el = null; }
   const y = barY(), below = scrollY > y + 1; /* measured before the panel swap changes the page height */
   if (pg !== cur) {
-    cur = pg;
+    cur = pg; pq = {}; /* fresh queues: what the old panel still owes runs unseen */
     SH.forEach(s => s.hidden = s !== pg);
     tabs.forEach(a => a.hash === '#' + pg.dataset.sheet ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
     $('#rl')._cw = 0; redraw(); /* a panel coming back from display:none lost its scroll offset */
@@ -1193,6 +1220,17 @@ document.addEventListener('click', e => {
 });
 const first = route(false);
 stuck();
+/* the first-line figures count up from 0 (700 ms, slowing; one after another, 60 ms apart). Each keeps the width of its final figure
+   (tabular digits) so the labels stay put. Set to 0 at once, counted once the page is first shown (a tab opened in the background
+   would otherwise show the figures and then restart them); a frame longer than 50 ms counts as 50. While it counts, the true figure
+   is the element's accessible name (role img, whose text is presentational), so a screen reader never gets an interim value */
+matchMedia('(prefers-reduced-motion:reduce)').matches || document.querySelectorAll('#facts b').forEach((b, i) => {
+  const v = b.textContent; if (!/^\d+$/.test(v)) return;
+  b.style.minWidth = `${v.length}ch`; b.style.textAlign = 'right'; b.setAttribute('role', 'img'); b.setAttribute('aria-label', v); b.textContent = '0';
+  let el = -60 * i, last; const step = now => { el += Math.min(now - (last ?? now), 50); last = now; const p = matchMedia('(prefers-reduced-motion:reduce)').matches ? 1 : Math.min(1, Math.max(0, el) / 700); /* the preference turning on mid-count: the figure at once */
+    b.textContent = p < 1 ? Math.round(+v * (1 - (1 - p) ** 3)) : v; if (p < 1 && !matchMedia('(prefers-reduced-motion:reduce)').matches) requestAnimationFrame(step); else { b.removeAttribute('role'); b.removeAttribute('aria-label'); } };
+  shown(() => requestAnimationFrame(step));
+});
 /* the browser's own fragment scroll (to an inner id such as t-/x-) and late web fonts can move a deep link;
    put the target back after load and after fonts, unless the reader has already started moving */
 if (first) {
