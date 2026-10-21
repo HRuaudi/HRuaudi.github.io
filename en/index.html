@@ -499,12 +499,14 @@ html[data-season=winter]{--leaf:#8B97A3;--film:#E1E6EA;--tree:#6B8592;--sea:#fff
 :root[data-theme=&quot;dark&quot;][data-season=autumn]{--leaf:#D4A95A;--film:#1B1511;--tree:#D08A52;--sea:#DE9245}
 :root[data-theme=&quot;dark&quot;][data-season=winter]{--leaf:#9AA7B3;--film:#10151B;--tree:#8EA4B3;--sea:#DCE2EC}
 
+html{ overflow-y:hidden; }  /* the parent sizes the frame to fit, so no scrollbar gutter */
 html,body{ margin:0; background:transparent; color:var(--ink); font-family:var(--f-ko); font-size:14px; line-height:1.6; }
 .sheet{ display:grid; gap:18px; }
 .bar{ display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center; justify-content:space-between; border-bottom:1px solid var(--ink); padding-bottom:10px; }
 .chip:focus-visible{ outline:2px solid var(--red); outline-offset:2px; }
 .key{ display:flex; flex-wrap:wrap; gap:4px 16px; font:400 13px var(--f-let); color:var(--ink-2); }
-svg{ display:block; width:100%; height:auto; }
+svg{ display:block; width:100%; height:auto; min-width:560px; }
+.scroll{ overflow-x:auto; }  /* phones: keep the 560 px drawing readable and scroll it sideways */
 svg text{ font-family:var(--f-let); }
 .yr{ font-size:12px; fill:var(--ink-2); }
 .grid{ stroke:var(--hair); stroke-dasharray:1 4; }
@@ -571,7 +573,7 @@ html[data-season=spring] .pl .sp, html[data-season=autumn] .pl .au, html[data-se
       &lt;span&gt;별 크기·밝기: 함께 쓴 논문 수&lt;/span&gt;
     &lt;/div&gt;
   &lt;/div&gt;
-  &lt;svg id=&quot;svg&quot; role=&quot;img&quot; aria-label=&quot;공저자 별자리와 논문&quot;&gt;&lt;/svg&gt;
+  &lt;div class=&quot;scroll&quot;&gt;&lt;svg id=&quot;svg&quot; role=&quot;img&quot; aria-label=&quot;공저자 별자리와 논문&quot;&gt;&lt;/svg&gt;&lt;/div&gt;
   &lt;div class=&quot;note&quot; id=&quot;note&quot; aria-live=&quot;polite&quot;&gt;&lt;/div&gt;
 &lt;/div&gt;
 
@@ -584,7 +586,7 @@ const STARNAME = EN ? {sur: &#x27;Surrogate&#x27;, diag: &#x27;Diagnosis&#x27;, 
   : {sur: &#x27;대리모델자리&#x27;, diag: &#x27;진단자리&#x27;, phm: &#x27;예측진단자리&#x27;, rad: &#x27;방사선자리&#x27;}; // ponytail: auto names (each star&#x27;s most shared theme), edit here
 const ROLE = EN ? {&#x27;1저자&#x27;: &#x27;First author&#x27;, &#x27;교신&#x27;: &#x27;Corresponding&#x27;, &#x27;공동&#x27;: &#x27;Co-author&#x27;} : {};
 if (EN) { d3.select(&#x27;.key&#x27;).html(&#x27;&lt;span&gt;Star size: papers together&lt;/span&gt;&#x27;); d3.select(&#x27;#svg&#x27;).attr(&#x27;aria-label&#x27;, &#x27;Co-authors as stars over the papers&#x27;); }
-// drawn at the frame&#x27;s own width (560-1100 px; narrower frames scale the 560 drawing down), so text keeps its size
+// drawn at the frame&#x27;s own width (560-1100 px; narrower frames scroll the 560 drawing sideways), so text keeps its size
 const W = Math.max(560, Math.min(1100, document.documentElement.clientWidth)), H = 440, G = 384, SKY = G - 44, X0 = 2014, X1 = 2027;
 const fy = d =&gt; +d.slice(0, 4) + (+d.slice(5, 7) - .5) / 12;
 const X = d3.scaleLinear([X0, X1], [12, W - 12]);
