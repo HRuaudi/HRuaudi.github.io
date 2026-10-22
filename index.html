@@ -401,19 +401,22 @@ svg .bal :not(rect){pointer-events:none}
 @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .sky{--p1:#E9A9BC;--p2:#F2C8D4;--m1:#E0644A;--m2:#E8873F;--m3:#E6B44C} }
 :root[data-theme="dark"] .sky{--p1:#E9A9BC;--p2:#F2C8D4;--m1:#E0644A;--m2:#E8873F;--m3:#E6B44C}
 .sky i{position:absolute;top:-5vh;left:var(--x);width:var(--z);height:var(--z);background:var(--sea);opacity:.6;animation:fall var(--d) linear var(--dl) infinite}
-@keyframes fall{to{transform:translate(var(--sw),110vh) rotate(var(--rot))}}
+@keyframes fall{to{translate:var(--sw) 110vh}}
+/* petals and leaves tumble as they fall: each turns about its own tilted axis (--ax), once every --sp seconds, so it flips and shows its edge */
+@keyframes tumble{from{rotate:var(--ax) 0deg}to{rotate:var(--ax) 360deg}}
+html[data-season=spring] .sky i,html[data-season=autumn] .sky i{animation:fall var(--d) linear var(--dl) infinite,tumble var(--sp) linear var(--dl) infinite}
 @keyframes rise{to{transform:translate(var(--sw),-110vh)}}
 /* spring: cherry petals (obovate, a small notch at the tip), two pinks */
-html[data-season=spring] .sky i{width:calc(var(--z) * 2.2);height:calc(var(--z) * 2.2);opacity:.85;--rot:240deg;background:var(--p1);
+html[data-season=spring] .sky i{width:calc(var(--z) * 2.2);height:calc(var(--z) * 2.2);opacity:.85;background:var(--p1);
   -webkit-mask:var(--petal) center/contain no-repeat;mask:var(--petal) center/contain no-repeat}
 html[data-season=spring] .sky i:nth-child(2n){background:var(--p2)}
 html[data-season=summer] .sky i{border-radius:50%;width:calc(var(--z) * .45);height:calc(var(--z) * .45);box-shadow:0 0 6px 2px var(--sea);top:auto;bottom:-5vh;animation-name:rise;opacity:.8}
 /* autumn: Japanese maple leaves (7 lobes) in three hues (red, orange, gold, every third leaf), cut by a mask; they turn slowly as they fall */
-html[data-season=autumn] .sky i{width:calc(var(--z) * 3);height:calc(var(--z) * 3);opacity:.8;--rot:300deg;background:var(--m1);
+html[data-season=autumn] .sky i{width:calc(var(--z) * 3);height:calc(var(--z) * 3);opacity:.8;background:var(--m1);
   -webkit-mask:var(--maple) center/contain no-repeat;mask:var(--maple) center/contain no-repeat}
 html[data-season=autumn] .sky i:nth-child(3n+2){background:var(--m2)}
 html[data-season=autumn] .sky i:nth-child(3n){background:var(--m3)}
-html[data-season=winter] .sky i{border-radius:50%;background:var(--snow);box-shadow:0 0 3px rgba(0,0,0,.25);opacity:.9;--rot:0deg}
+html[data-season=winter] .sky i{border-radius:50%;background:var(--snow);box-shadow:0 0 3px rgba(0,0,0,.25);opacity:.9}
 /* the seasons' dress on the plants: blossoms (spring) or hanging leaves (autumn) on the broadleaf's tips, a snow cap on every edge that faces up (winter) */
 svg .sea{display:none}
 html[data-season=spring] svg .sea.sp,html[data-season=autumn] svg .sea.au,html[data-season=winter] svg .sea.wi{display:block}
@@ -1601,7 +1604,7 @@ $('#foot').innerHTML = `<p>${esc(C.footer || '')}</p>${contact('f')}<p class="se
    14 bits at random places, sizes, speeds, sways, already mid-fall */
 const sky = document.createElement('div'); sky.className = 'sky'; sky.setAttribute('aria-hidden', 'true'); document.body.append(sky);
 const setSeason = s => { document.documentElement.dataset.season = s;
-  sky.innerHTML = Array.from({length: 14}, () => `<i style="--x:${(Math.random() * 100).toFixed(1)}%;--z:${(6 + Math.random() * 5).toFixed(1)}px;--d:${(20 + Math.random() * 14).toFixed(1)}s;--dl:-${(Math.random() * 34).toFixed(1)}s;--sw:${(Math.random() * 160 - 80).toFixed(0)}px"></i>`).join('');
+  sky.innerHTML = Array.from({length: 14}, () => `<i style="--x:${(Math.random() * 100).toFixed(1)}%;--z:${(6 + Math.random() * 5).toFixed(1)}px;--d:${(20 + Math.random() * 14).toFixed(1)}s;--dl:-${(Math.random() * 34).toFixed(1)}s;--sw:${(Math.random() * 160 - 80).toFixed(0)}px;--sp:${(4 + Math.random() * 5).toFixed(1)}s;--ax:${(Math.random() * 2 - 1).toFixed(2)} ${(Math.random() * 2 - 1).toFixed(2)} ${(.3 + Math.random() * .7).toFixed(2)}"></i>`).join('');
   document.querySelectorAll('.sea-sw .btn').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === s))); };
 setSeason(['winter', 'winter', 'spring', 'spring', 'spring', 'summer', 'summer', 'summer', 'autumn', 'autumn', 'autumn', 'winter'][new Date().getMonth()]);
 $('.sea-sw').addEventListener('click', e => { const b = e.target.closest('.btn'); if (b) setSeason(b.dataset.s); });
