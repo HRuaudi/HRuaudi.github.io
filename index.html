@@ -395,17 +395,21 @@ svg .bal :not(rect){pointer-events:none}
   .list li{grid-template-columns:minmax(0,1fr);gap:0}
 }
 /* the sky: 14 bits drifting down the window (petals, leaves, snow; fireflies rise in summer), over everything, touching nothing */
-.sky{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:30;--m1:#C2432B;--m2:#D7692A;--m3:#D9A032;
-  --maple:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 1l1.5 4 2-1-.5 4.5 3.5-2.5-.5 2 4-.5-1.5 3 1.5 1-4.5 3 1 1.5-5.5-.8-.5 3.8v4h-1v-4l-.5-3.8-5.5.8 1-1.5-4.5-3 1.5-1-1.5-3 4 .5-.5-2 3.5 2.5-.5-4.5 2 1z'/%3E%3C/svg%3E")}
-@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .sky{--m1:#E0644A;--m2:#E8873F;--m3:#E6B44C} }
-:root[data-theme="dark"] .sky{--m1:#E0644A;--m2:#E8873F;--m3:#E6B44C}
+.sky{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:30;--p1:#F2B8C8;--p2:#F8D3DE;--m1:#C2432B;--m2:#D7692A;--m3:#D9A032;
+  --maple:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='4 8 92 72'%3E%3Cpath d='M47.9 63.6L46.6 62.9C43.3 66.0 35.3 65.5 31.2 64.8C33.9 61.7 39.8 56.2 37.0 58.0L37.0 58.0C33.6 60.9 24.2 52.0 19.9 47.1C26.4 46.0 39.3 45.3 39.7 50.1L39.7 50.1C31.2 49.2 27.9 33.4 27.1 25.2C34.5 28.8 48.2 37.3 46.1 45.6L46.1 45.6C38.0 37.3 45.4 20.3 50.0 12.0C54.6 20.3 62.0 37.3 53.9 45.6L53.9 45.6C51.8 37.3 65.5 28.8 72.9 25.2C72.1 33.4 68.8 49.2 60.3 50.1L60.3 50.1C60.7 45.3 73.6 46.0 80.1 47.1C75.8 52.0 66.4 60.9 63.0 58.0L63.0 58.0C60.2 56.2 66.1 61.7 68.8 64.8C64.7 65.5 56.7 66.0 53.4 62.9Z'/%3E%3Cpath d='M49 60L47 78h2L51 60Z'/%3E%3C/svg%3E");
+  --petal:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M11 23C9.5 19 5 13.5 5.5 8.5 6 4.5 8.5 3 10.8 4.2L12 5.6 13.2 4.2C15.5 3 18 4.5 18.5 8.5 19 13.5 14.5 19 13 23 12.5 23.7 11.5 23.7 11 23Z'/%3E%3C/svg%3E")}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .sky{--p1:#E9A9BC;--p2:#F2C8D4;--m1:#E0644A;--m2:#E8873F;--m3:#E6B44C} }
+:root[data-theme="dark"] .sky{--p1:#E9A9BC;--p2:#F2C8D4;--m1:#E0644A;--m2:#E8873F;--m3:#E6B44C}
 .sky i{position:absolute;top:-5vh;left:var(--x);width:var(--z);height:var(--z);background:var(--sea);opacity:.6;animation:fall var(--d) linear var(--dl) infinite}
 @keyframes fall{to{transform:translate(var(--sw),110vh) rotate(var(--rot))}}
 @keyframes rise{to{transform:translate(var(--sw),-110vh)}}
-html[data-season=spring] .sky i{border-radius:70% 0 70% 0;--rot:160deg}
+/* spring: cherry petals (obovate, a small notch at the tip), two pinks */
+html[data-season=spring] .sky i{width:calc(var(--z) * 2.2);height:calc(var(--z) * 2.2);opacity:.85;--rot:240deg;background:var(--p1);
+  -webkit-mask:var(--petal) center/contain no-repeat;mask:var(--petal) center/contain no-repeat}
+html[data-season=spring] .sky i:nth-child(2n){background:var(--p2)}
 html[data-season=summer] .sky i{border-radius:50%;width:calc(var(--z) * .45);height:calc(var(--z) * .45);box-shadow:0 0 6px 2px var(--sea);top:auto;bottom:-5vh;animation-name:rise;opacity:.8}
-/* autumn: maple leaves in three hues (red, orange, gold, every third leaf), cut by a mask; they turn slowly as they fall */
-html[data-season=autumn] .sky i{width:calc(var(--z) * 1.9);height:calc(var(--z) * 1.9);opacity:.8;--rot:300deg;background:var(--m1);
+/* autumn: Japanese maple leaves (7 lobes) in three hues (red, orange, gold, every third leaf), cut by a mask; they turn slowly as they fall */
+html[data-season=autumn] .sky i{width:calc(var(--z) * 3);height:calc(var(--z) * 3);opacity:.8;--rot:300deg;background:var(--m1);
   -webkit-mask:var(--maple) center/contain no-repeat;mask:var(--maple) center/contain no-repeat}
 html[data-season=autumn] .sky i:nth-child(3n+2){background:var(--m2)}
 html[data-season=autumn] .sky i:nth-child(3n){background:var(--m3)}
