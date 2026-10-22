@@ -797,8 +797,14 @@ try {
     if (r.dataset.theme) document.documentElement.dataset.theme = r.dataset.theme; else delete document.documentElement.dataset.theme;
   };
   f(); new MutationObserver(f).observe(r, {attributes: true});
-  const sheet = document.querySelector(&#x27;.sheet&#x27;), h = () =&gt; frameElement.style.height = sheet.getBoundingClientRect().height + &#x27;px&#x27;;
+  // while the pointer is over the map the frame only grows: the note opening and closing under a moving pointer would change the
+  // page&#x27;s height, and near the page&#x27;s end the browser pulls the page back up, so it jumped up and down. It fits again on leaving
+  let hold = false;
+  const sheet = document.querySelector(&#x27;.sheet&#x27;), h = () =&gt; { const v = sheet.getBoundingClientRect().height;
+    if (!hold || v &gt; parseFloat(frameElement.style.height)) frameElement.style.height = v + &#x27;px&#x27;; };
   h(); new ResizeObserver(h).observe(sheet);
+  addEventListener(&#x27;pointerover&#x27;, () =&gt; hold = true);
+  addEventListener(&#x27;pointerout&#x27;, e =&gt; { if (!e.relatedTarget) { hold = false; h(); } });  // relatedTarget null: out of the frame
 } catch (e) {}
 // ponytail: redraw by reloading the frame when its width changes; make the drawing a function of W if reloads ever flicker
 let w0 = document.documentElement.clientWidth, rt;
