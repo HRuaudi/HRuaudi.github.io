@@ -105,6 +105,23 @@ html.fw .frame{visibility:hidden}
 .pg{padding:24px var(--pad) 32px}
 .ft{margin:0 var(--pad);padding:12px 0 14px;border-top:1px solid var(--hair);font-size:14px;line-height:1.6;color:var(--ink-2)}
 .ft .contact{margin-top:8px}
+.ft{position:relative}
+/* creatures: a thin strip on the footer's hairline (the page's bottom padding is free there) and a hole under the opened address; drawings are ink lines, nothing takes a click */
+.trk{position:absolute;left:0;right:0;bottom:calc(100% + 1px);height:26px;pointer-events:none;overflow-x:clip}
+.trk svg{display:block;overflow:visible}
+.trk .pr{position:absolute;bottom:0;opacity:.32}
+.trk .an{position:absolute;left:0;bottom:0;opacity:0}
+.mus{position:absolute;overflow:hidden;pointer-events:none}
+.mus svg{position:absolute;left:0;bottom:0;display:block;overflow:visible}
+.tk{fill:none;stroke:var(--ink);stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
+.tk .r{stroke:var(--red)} .tk .f{fill:var(--ink);stroke:none} .tk .fr{fill:var(--red);stroke:none}
+.pr .f{fill:var(--ink)} .pr .l{fill:none;stroke:var(--ink);stroke-width:1;stroke-linecap:round}
+@media (max-width:640px){ .trk{height:22px} }
+/* the beaver of the gantt: a clip beside an arrow tip (the water line is its floor), the drawing rises out of it */
+.bv{position:absolute;overflow:hidden;pointer-events:none}
+.bv::after{content:"";position:absolute;left:0;right:0;bottom:0;border-top:1px solid var(--ink-2)}
+.bv svg{display:block;overflow:visible}
+@media print{.trk,.mus,.bv{display:none}}
 
 .blk + .blk{margin-top:32px}
 h2{font:600 20px/1.4 var(--f-ko);margin-bottom:12px}
@@ -126,7 +143,7 @@ h2{font:600 20px/1.4 var(--f-ko);margin-bottom:12px}
 .seg{display:inline-block}
 .role-en{font:400 14px/1.45 var(--f-let);color:var(--ink-2)}
 .thesis{font-size:16px;line-height:1.7;max-width:56em;margin-top:14px;text-wrap:pretty}
-.contact{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:14px}
+.contact{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:14px;position:relative}
 .em:empty{display:none}
 .em{font:500 18px var(--f-let);letter-spacing:.02em;margin-right:4px;user-select:all;-webkit-user-select:all}
 .btn{font:500 13.5px/1 var(--f-let);letter-spacing:.04em;color:var(--ink);background:transparent;border:1px solid var(--ink);padding:7px 12px;cursor:pointer;border-radius:0;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:32px}
@@ -1040,6 +1057,23 @@ const drawer = (row, em, cp, I, r0, h0) => {
       {transform: `translate(${dx + .35 * P}px,${dy}px)`, opacity: 0, offset: .35}, {transform: 'translateX(-12px)', opacity: 0, offset: .8}, {transform: 'none', opacity: 1}], o); });
   Math.abs(h1 - h0) < .5 || row.animate({height: [h0 + 'px', h1 + 'px']}, o);
 };
+/* the mouse: once per page load, when the first address opens (after the drawer has settled). It runs through a hole-like strip under the address,
+   from behind the copy button to the left end, clipped at both ends; it is skipped where the address and Copy wrap onto different lines */
+let mouseSeen = false;
+const mouse = (row, em, cp) => {
+  if (mouseSeen || quiet() || matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+  const r = row.getBoundingClientRect(), e = em.getBoundingClientRect(), c = cp.getBoundingClientRect(), h = 9;
+  if (Math.abs(e.top - c.top) > 8) return; /* shortcut: the 8 px row gap or the footer's margin under the line is taken as free, not measured */
+  mouseSeen = true;
+  const d = document.createElement('div'); d.className = 'mus'; d.setAttribute('aria-hidden', 'true');
+  d.style.cssText = `left:${e.left - r.left}px;top:${e.bottom + 1 - r.top}px;width:${e.width}px;height:${h}px`;
+  d.innerHTML = `<svg class="tk" width="19" height="9" viewBox="0 0 19 9" style="stroke-width:1"><g><path d="M1 5.2 4 3.3C6 1.8 11 1.4 13.5 3.4 15 4.6 14.6 7 12.5 7.4L5.2 7.6Q2 7.4 1 5.2ZM14 5.2C16.5 5.2 17 3 18.4 2.4M5.5 7.6V8.6M11.5 7.4V8.6"/><circle class="r" cx="5.6" cy="2.9" r="1.5" style="stroke-width:.9"/><circle class="fr" cx="5.6" cy="2.9" r=".5"/><circle class="f" cx="2.6" cy="4.7" r=".5"/></g></svg>`;
+  row.append(d);
+  const v = d.firstChild, W = e.width, n = 6, o = {duration: 1500, easing: 'cubic-bezier(.35,0,.65,1)'};
+  v.animate({transform: [`translateX(${W}px)`, 'translateX(-19px)']}, o);
+  v.firstChild.animate({transform: ['none', 'translateY(-1.2px)', 'none']}, {duration: o.duration / n, iterations: n});
+  setTimeout(() => d.remove(), o.duration + 100);
+};
 /* address is stored reversed + base64 so harvesters reading the source get nothing */
 let mail = '';
 const wire = k => { $('#reveal' + k).addEventListener('click', e => {
@@ -1047,7 +1081,7 @@ const wire = k => { $('#reveal' + k).addEventListener('click', e => {
   const row = e.currentTarget.parentNode, em = $('#em' + k), cp = $('#cp' + k), I = [e.currentTarget, ...row.querySelectorAll('a')], r0 = I.map(a => a.getBoundingClientRect()), h0 = row.getBoundingClientRect().height;
   em.textContent = mail; $('#cpmsg' + k).textContent = ui('이메일 주소: ') + mail;
   e.currentTarget.hidden = true; cp.hidden = false;
-  matchMedia('(prefers-reduced-motion:reduce)').matches || drawer(row, em, cp, I, r0, h0); cp.focus();
+  matchMedia('(prefers-reduced-motion:reduce)').matches || (drawer(row, em, cp, I, r0, h0), cp._d.finished.then(() => shown(() => mouse(row, em, cp)), () => {})); cp.focus();
 });
 $('#cp' + k).addEventListener('click', () => {
   const b = $('#cp' + k), em = $('#em' + k);
@@ -1336,7 +1370,33 @@ const grow = (b, dl = 0) => { if (!b.classList.contains('wait')) return; if (mat
   const a = b.animate([{clipPath: 'inset(0 100% 0 0)'}, {clipPath: 'inset(0 0 0 0)'}], {duration: 450, delay: dl, easing: 'ease-out', fill: 'both'});
   a.finished.then(() => { a.cancel(); b.classList.remove('wait'); if (!b.classList.contains('on') || matchMedia('(prefers-reduced-motion:reduce)').matches) return;
     const p = b.animate([{transform: 'translateY(-50%) scale(0)'}, {transform: 'translateY(-50%) scale(1)'}], {duration: 320, easing: 'cubic-bezier(.3,1.8,.5,1)', fill: 'both', pseudoElement: '::after'});
-    p.finished.then(() => p.cancel()); }); };
+    p.finished.then(() => { p.cancel(); clearTimeout(bvT); bvT = setTimeout(() => shown(beaver), 200); }); }); }; /* the bars arrive 60 ms apart: the beaver starts once the last arrow is out */
+/* a beaver (ink line, like the footer animals) comes up beside the arrow of each running project once per load, top first: it gnaws twice, the arrow tip
+   nudges, it dives. Skipped where it would not fit or would touch text, with "끄기" and with reduced motion. A tip is measured when its turn comes */
+const BVG = '<g><path d="M28.4 21.4C31 19.6 36.5 20 38.6 22.4 39.4 24.2 36 25.4 28.2 24.8"/><path d="M31.2 20.2l2 4.6M34.4 20.2l2 4.2M29.6 23.4l4.6-3M32.4 25l5.2-3.2" stroke-width=".6"/><path d="M11 14C8 19 9 25 15 25H25C30 25 30.5 19.5 28 15.5 26 11.5 18 10 13 12.5"/><path d="M11.4 18c1.8-.8 3.6 0 4 1.5"/></g><g class="hd" style="transform-origin:12px 15px"><path d="M2.4 12C2 7.6 5.6 4.6 9.6 4.8 14 5 15.6 8.6 15 12.6 14.4 15.6 11.4 16.8 7.5 16.6 4.4 16.4 2.7 14.6 2.4 12Z"/><circle cx="11.8" cy="5.6" r="1.8"/><circle class="f" cx="7" cy="8.8" r="1"/><circle class="f" cx="3" cy="10.2" r="1.2"/><path fill="var(--sheet)" d="M3.4 14.2h2v3.6h-2zM5.6 14.4h2v3.4h-2z"/></g>';
+let bvDone = 0, bvT;
+const beaver = async () => {
+  const rm = () => matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if (bvDone || rm() || quiet()) return; bvDone = 1;
+  const W = 40, H = 26, ty = 15.6, vw = $('#gantt').closest('.frame').getBoundingClientRect().right - 1.5, /* inside the page border, not the window (on phones no tip has room) */
+    txt = [...$('#gantt').querySelectorAll('h3, p, .gt-w, .seed, .axis span')].flatMap(e => { const r = document.createRange(); r.selectNodeContents(e); return [...r.getClientRects()]; });
+  const bars = [...document.querySelectorAll('#gantt .bar.on')].filter(b => !b.classList.contains('wait')).sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top);
+  for (const b of bars) {
+    if (rm() || quiet() || !b.offsetParent) break;
+    const t = b.parentElement, tr = t.getBoundingClientRect(), br = b.getBoundingClientRect(), x = br.right + 12 - tr.left, y = tr.height / 2 - ty,
+      L = tr.left + x, T = tr.top + y, R = L + W, B = T + H;
+    if (br.top < 46 || br.bottom > innerHeight || R > vw || txt.some(q => q.width && q.left < R + 2 && q.right > L - 2 && q.top < B + 2 && q.bottom > T - 2)) continue; /* no room: not this tip */
+    const c = document.createElement('div'); c.className = 'bv'; c.setAttribute('aria-hidden', 'true'); c.style.cssText = `left:${x}px;top:${y}px;width:${W}px;height:${H}px`;
+    c.innerHTML = `<svg class="tk" viewBox="0 0 40 26" width="${W}" height="${H}">${BVG}</svg>`; t.append(c);
+    const sv = c.firstChild, hd = c.querySelector('.hd'), go = (e, k, o) => e.animate(k, o).finished.catch(() => {});
+    try {
+      await go(sv, [{transform: `translateY(${H}px)`}, {transform: 'none'}], {duration: 330, easing: 'cubic-bezier(.3,1.4,.5,1)'});
+      setTimeout(() => b.animate({transform: ['translateY(-50%)', 'translateY(-50%) translateX(2.5px)', 'translateY(-50%)']}, {duration: 260, easing: 'ease-out', pseudoElement: '::after'}), 330); /* the arrow tip takes the second bite */
+      await go(hd, [{transform: 'none'}, {transform: 'translateX(-1.6px) rotate(-7deg)', offset: .35}, {transform: 'none', offset: .6}, {transform: 'translateX(-1.6px) rotate(-7deg)', offset: .8}, {transform: 'none'}], {duration: 560});
+      await go(sv, [{transform: 'none'}, {transform: `translateY(${H}px)`}], {duration: 280, easing: 'ease-in'});
+    } finally { c.remove(); }
+  }
+};
 /* the red triangle of the newest change falls onto its line and bounces once (420 ms); it is seen early in the fall, not only at the end */
 const drop = (e, dl = 0) => { if (!e.classList.contains('wait')) return; if (matchMedia('(prefers-reduced-motion:reduce)').matches) return e.classList.remove('wait');
   const a = e.animate([{transform: 'translateY(-1.1em)', opacity: 0, easing: 'ease-in'}, {opacity: 1, offset: .15}, {transform: 'none', offset: .5, easing: 'ease-out'},
@@ -1698,7 +1758,43 @@ let skyOff = false; try { skyOff = localStorage.getItem('sky') === 'off'; } catc
 setSeason(['winter', 'winter', 'spring', 'spring', 'spring', 'summer', 'summer', 'summer', 'autumn', 'autumn', 'autumn', 'winter'][new Date().getMonth()]);
 const setOff = () => { sky.innerHTML = ''; press('off'); };
 skyOff && setOff();
-$('.sea-sw').addEventListener('click', e => { const b = e.target.closest('.btn'); if (!b) return; const off = b.dataset.s === 'off'; off ? setOff() : setSeason(b.dataset.s); keep(off); });
+$('.sea-sw').addEventListener('click', e => { const b = e.target.closest('.btn'); if (!b) return; const off = b.dataset.s === 'off', same = b.dataset.s === document.documentElement.dataset.season; off ? setOff() : setSeason(b.dataset.s); keep(off); same && !off || (trk.innerHTML = ''); prowl(); });
+/* footprints: once per season and page load, when the footer is half in view, a small animal of the season crosses the strip on the footer's hairline,
+   leaves faint prints (kept until the season changes), stops over the back-to-top button's corner, looks down at it and fades away. Never with "끄기" or reduced motion */
+const quiet = () => $('.sea-sw .btn[data-s=off]').getAttribute('aria-pressed') === 'true';
+const trk = document.createElement('div'); trk.className = 'trk'; trk.setAttribute('aria-hidden', 'true'); $('#foot').append(trk);
+const L = (h, b) => `<svg class="tk" viewBox="0 0 40 26" width="100%"><g>${b}</g><g class="hd" style="transform-origin:${h[0]}px ${h[1]}px">${h[2]}</g></svg>`;
+const ANI = { /* [stride px, hop px, neck x y + head, body+legs, print: width px, svg parts, print height px (8 if absent)] */
+  spring: [30, 5, [13, 13, '<circle cx="10" cy="11" r="4.5"/><path d="M5.8 10.6 2 12l3.9 1"/><path class="r" d="M6.6 8.2C8.6 6 12 6.2 13.6 8"/><circle class="f" cx="9" cy="10" r=".9"/>'],
+    '<path d="M13 8.6C20 5.5 28 8 31 13l8 3.5-8.5 1C27 21 18 21 14 15.5"/><path d="M18 12.5c4-1.2 8 .5 10 2.8M19.5 20.3l-.4 4.2m-2.6 0h4.6M24 19.8l-.2 4.7m-2.6 0h4.6"/>',
+    12, '<path class="l" d="M4.9 3L3 3M5.4 3.9L4.5 5.2M5.4 2.1L4.5 0.8M7.1 3h.8M8.9 7L7 7M9.4 7.9L8.5 9.2M9.4 6.1L8.5 4.8M11.1 7h.8"/><circle class="f" cx="6" cy="3" r="1"/><circle class="f" cx="3" cy="3" r=".75"/><circle class="f" cx="4.5" cy="5.2" r=".75"/><circle class="f" cx="4.5" cy="0.8" r=".75"/><circle class="f" cx="8.1" cy="3" r=".55"/><circle class="f" cx="10" cy="7" r="1"/><circle class="f" cx="7" cy="7" r=".75"/><circle class="f" cx="8.5" cy="9.2" r=".75"/><circle class="f" cx="8.5" cy="4.8" r=".75"/><circle class="f" cx="12.1" cy="7" r=".55"/>', 10], /* spring: a pair of bird's feet (toes ending in dots, a heel pad), 10 px high */
+  summer: [22, 1.2, [14, 12, '<circle cx="9" cy="10.5" r="5"/><path d="M5.2 7.2V2.4l3.6 2.6M10.4 4.8 13.6 2.4l.5 5"/><circle class="f" cx="7.2" cy="9.6" r=".9"/><circle class="fr" cx="4.4" cy="11.8" r=".9"/><path d="M11.5 11.5h3.5M11 13.5l3 .6"/>'],
+    '<path d="M13.6 9.2C20 10.5 30 9.5 34 12c3 2 2 6.2-1.4 6.5H16.5c-2.2 0-3.2-2-3.2-4.2"/><path d="M35 12.2c4.5-1 5.5-5.5 3.8-8.7M16.6 18.5l-.4 6M21 18.5l.6 6M29.5 18.5l-.6 6M33.5 18.5l.8 6"/>',
+    9, '<ellipse class="f" cx="4.5" cy="5.6" rx="2.2" ry="1.7"/><circle class="f" cx="1.2" cy="3.4" r=".8"/><circle class="f" cx="3" cy="1.2" r=".8"/><circle class="f" cx="6" cy="1.2" r=".8"/><circle class="f" cx="7.8" cy="3.4" r=".8"/>'],
+  autumn: [34, 4, [14, 14, '<circle cx="10" cy="13" r="4.2"/><path d="M10.5 9.2 11.8 5.6 14 9.8"/><circle class="f" cx="8" cy="12" r=".9"/><circle class="f" cx="5.9" cy="14.2" r=".7"/><ellipse cx="6.5" cy="19" rx="2.3" ry="2.6"/><path class="r" d="M4.2 17.7Q6.5 15.5 8.8 17.7"/>'],
+    '<path d="M14 10.5C19 8.5 26 11 29 17c.5 2.5-.5 4.5-3 4.5H17c-2.5 0-3.5-2.5-3-6.5"/><path d="M29 18C41 20 44 7 36 1.5 35.5 5 32 6 30 10c-1 2-1.5 5-1 8Z"/><path d="M17 21.5l-.5 3m-2.2 0h4.2M26 21.5l-3 3h-4"/>',
+    11, '<ellipse class="f" cx="2.2" cy="2.2" rx="1.7" ry="1.1"/><ellipse class="f" cx="2.2" cy="5.8" rx="1.7" ry="1.1"/><ellipse class="f" cx="9" cy="2.2" rx="1.7" ry="1.1"/><ellipse class="f" cx="9" cy="5.8" rx="1.7" ry="1.1"/>'],
+  winter: [38, 6, [12, 14, '<circle cx="9" cy="14" r="4.2"/><path d="M10.2 10.2C8.5 4.5 11 1.5 13.6 2.6 15 5 13 8.5 12.8 10.8M8.2 10.3C4.5 5.5 6.5 2 9.2 3.2"/><circle class="f" cx="7.4" cy="13" r=".9"/><circle class="fr" cx="4.8" cy="15.2" r=".8"/>'],
+    '<path d="M12.5 11.5C20 7 31 10 33 16.5 34 21 29 22 24 22H15.5c-2.5-1-3.5-5-3-10.5"/><circle cx="35" cy="17" r="2.2"/><path d="M16 22l-.5 2.5h-4m16.5-2.5v2.5h7"/>',
+    15, '<ellipse class="f" cx="3.5" cy="2.2" rx="3.2" ry="1.2"/><ellipse class="f" cx="3.5" cy="5.8" rx="3.2" ry="1.2"/><circle class="f" cx="10" cy="3" r="1"/><circle class="f" cx="13" cy="5" r="1"/>']};
+let inFoot = false; const seenSea = new Set();
+const prowl = () => {
+  const s = document.documentElement.dataset.season, a = ANI[s], pg = SH.find(e => !e.hidden);
+  if (!a || !inFoot || quiet() || seenSea.has(s) || matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+  const ph = matchMedia('(max-width:640px)').matches, aw = ph ? 34 : 40, W = trk.clientWidth, x0 = W - aw, xs = ph ? 8 : 48, n = Math.floor((x0 - xs) / a[0]), D = ph ? 2600 : 3600, T = .72;
+  if (n < 3 || !pg || parseFloat(getComputedStyle(pg).paddingBottom) < trk.clientHeight) return; /* no free strip */
+  seenSea.add(s);
+  trk.innerHTML = Array.from({length: n}, (_, k) => `<svg class="pr" width="${a[4]}" height="${a[6] || 8}" viewBox="0 0 ${a[4]} ${a[6] || 8}" style="left:${(x0 - (x0 - xs) * (k + 1) / n + aw / 2 - a[4] / 2).toFixed(1)}px">${a[5]}</svg>`).join('') + `<div class="an" style="width:${aw}px">${L(a[2], a[3])}</div>`;
+  shown(() => {
+    const an = trk.lastChild;
+    trk.querySelectorAll('.pr').forEach((p, k) => p.animate({opacity: [0, .32]}, {duration: 200, delay: D * T * (k + 1) / n - 100, fill: 'backwards'}));
+    const at = x => ({transform: `translateX(${x}px)`});
+    an.animate([{...at(x0), opacity: 0}, {...at(x0 - 6), opacity: 1, offset: .05}, {...at(xs), opacity: 1, offset: T}, {...at(xs), opacity: 1, offset: .9}, {...at(xs - 14), opacity: 0}], {duration: D});
+    an.firstChild.animate({transform: ['none', `translateY(${-a[1]}px)`, 'none']}, {duration: D * T / n, iterations: n, easing: 'ease-in-out'});
+    an.querySelector('.hd').animate([{transform: 'none'}, {transform: 'none', offset: T + .02}, {transform: 'rotate(-24deg)', offset: T + .08}, {transform: 'rotate(-24deg)', offset: .88}, {transform: 'none'}], {duration: D});
+  });
+};
+new IntersectionObserver(es => { const e = es[es.length - 1]; inFoot = e.isIntersecting && e.intersectionRatio >= .5; prowl(); }, {threshold: .5}).observe($('#foot'));
 /* phone: back to the top, then keyboard focus goes to the name so the next Tab starts from there */
 $('#totop').addEventListener('click', () => { scrollTo(0, 0); const h = $('.pro h1'); h.tabIndex = -1; h.focus({preventScroll: true}); });
 /* a seed flies: a copy of it leaves the project row in an arc for where its paper or patent lives (the papers tab up in the bar, or the
