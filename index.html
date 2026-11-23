@@ -474,7 +474,7 @@ html[data-season=winter] svg.ico .bl~.kn{fill:var(--ink)!important}
 svg.ico .sea.wi path.sn{fill:var(--snow);stroke:var(--ink);stroke-width:1}
 /* the season's picture beside the overview heading (one of four), and the switch in the footer */
 .vig{display:none;width:150px;height:64px;margin:-20px 0 0 -22px;flex:none}
-@media (min-width:1180px){.vig{align-self:flex-start;margin:56px 40px -120px auto}} /* wide: the picture hangs in the free space right of the overview text */
+@media (min-width:1180px){.vig{align-self:flex-start;width:210px;height:90px;margin:36px 0 -126px auto} .lede{max-width:calc(100% - 250px)}} /* wide: the picture hangs in the free space right of the overview text */
 html[data-season=spring] .vig[data-s=spring],html[data-season=summer] .vig[data-s=summer],html[data-season=autumn] .vig[data-s=autumn],html[data-season=winter] .vig[data-s=winter]{display:block}
 .vig .l{fill:none;stroke:var(--ink);stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}
 .vig .k{fill:var(--sea);stroke:var(--ink);stroke-width:1;stroke-linejoin:round}
@@ -1398,10 +1398,10 @@ const beaver = async () => {
     c.innerHTML = `<svg class="tk" viewBox="0 0 40 26" width="${W}" height="${H}">${BVG}</svg>`; t.append(c);
     const sv = c.firstChild, hd = c.querySelector('.hd'), go = (e, k, o) => e.animate(k, o).finished.catch(() => {});
     try {
-      await go(sv, [{transform: `translateY(${H}px)`}, {transform: 'none'}], {duration: 480, easing: 'cubic-bezier(.3,1.4,.5,1)'});
-      setTimeout(() => b.animate({transform: ['translateY(-50%)', 'translateY(-50%) translateX(2.5px)', 'translateY(-50%)']}, {duration: 400, iterations: 4, easing: 'ease-out', pseudoElement: '::after'}), 360); /* the arrow tip takes each bite */
-      await go(hd, [{transform: 'none'}, {transform: 'translateX(-1.6px) rotate(-7deg)', offset: .35}, {transform: 'none', offset: .7}, {transform: 'none'}], {duration: 400, iterations: 4, delay: 300}); /* four slow bites */
-      await go(sv, [{transform: 'none'}, {transform: `translateY(${H}px)`}], {duration: 380, easing: 'ease-in', delay: 250});
+      await go(sv, [{transform: `translateY(${H}px)`}, {transform: 'none'}], {duration: 700, easing: 'cubic-bezier(.3,1.4,.5,1)'});
+      setTimeout(() => b.animate({transform: ['translateY(-50%)', 'translateY(-50%) translateX(2.5px)', 'translateY(-50%)']}, {duration: 650, iterations: 4, easing: 'ease-out', pseudoElement: '::after'}), 520); /* the arrow tip takes each bite */
+      await go(hd, [{transform: 'none'}, {transform: 'translateX(-1.6px) rotate(-7deg)', offset: .35}, {transform: 'none', offset: .7}, {transform: 'none'}], {duration: 650, iterations: 4, delay: 400}); /* four slow bites */
+      await go(sv, [{transform: 'none'}, {transform: `translateY(${H}px)`}], {duration: 550, easing: 'ease-in', delay: 350});
     } finally { c.remove(); }
   }
 };
@@ -1785,7 +1785,7 @@ let inFoot = false; const seenSea = new Set();
 const prowl = () => {
   const s = document.documentElement.dataset.season, a = ANI[s], pg = SH.find(e => !e.hidden);
   if (!a || !inFoot || quiet() || seenSea.has(s) || matchMedia('(prefers-reduced-motion:reduce)').matches) return;
-  const ph = matchMedia('(max-width:640px)').matches, aw = ph ? 34 : 40, W = trk.clientWidth, x0 = W - aw, xs = ph ? 8 : 48, n = Math.floor((x0 - xs) / a[0]), D = Math.max(2600, n * 220), T = .72; /* about 160 ms a hop */
+  const ph = matchMedia('(max-width:640px)').matches, aw = ph ? 34 : 40, W = trk.clientWidth, x0 = W - aw, xs = ph ? 8 : 48, n = Math.floor((x0 - xs) / a[0]), D = Math.max(3200, n * 380), T = .72; /* about 270 ms a hop */
   if (n < 3 || !pg || parseFloat(getComputedStyle(pg).paddingBottom) < trk.clientHeight) return; /* no free strip */
   seenSea.add(s);
   trk.innerHTML = Array.from({length: n}, (_, k) => `<svg class="pr" width="${a[3]}" height="${a[5] || 8}" viewBox="0 0 ${a[3]} ${a[5] || 8}" style="left:${(x0 - (x0 - xs) * (k + 1) / n + aw / 2 - a[3] / 2).toFixed(1)}px">${a[4]}</svg>`).join('') + `<div class="an" style="width:${aw}px">${L(a[2])}</div>`;
