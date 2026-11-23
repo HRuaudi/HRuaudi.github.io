@@ -1792,7 +1792,7 @@ const prowl = () => {
   trk.innerHTML = Array.from({length: n}, (_, k) => `<svg class="pr" width="${a[3]}" height="${a[5] || 8}" viewBox="0 0 ${a[3]} ${a[5] || 8}" style="left:${(x0 - (x0 - xs) * (k + 1) / n + aw / 2 - a[3] / 2).toFixed(1)}px">${a[4]}</svg>`).join('') + `<div class="an" style="width:${aw}px">${L(a[2])}</div>`;
   shown(() => {
     const an = trk.lastChild;
-    trk.querySelectorAll('.pr').forEach((p, k) => p.animate({opacity: [0, .32]}, {duration: 200, delay: D * T * (k + 1) / n - 100, fill: 'backwards'}));
+    trk.querySelectorAll('.pr').forEach((p, k) => p.animate({opacity: [0, .32]}, {duration: 200, delay: D * (.05 + (T - .05) * ((x0 - xs) * (k + 1) / n + 6) / (x0 - 6 - xs)), fill: 'backwards'})); /* a print shows once the animal's middle is about 12 px past it (the animal starts moving at 5 % of D, from x0 - 6) */
     const at = x => ({transform: `translateX(${x}px)`});
     an.animate([{...at(x0), opacity: 0}, {...at(x0 - 6), opacity: 1, offset: .05}, {...at(xs), opacity: 1, offset: T}, {...at(xs), opacity: 1, offset: .9}, {...at(xs - 14), opacity: 0}], {duration: D});
     an.firstChild.animate({transform: ['none', `translateY(${-a[1]}px)`, 'none']}, {duration: D * T / n, iterations: n, easing: 'ease-in-out'});
